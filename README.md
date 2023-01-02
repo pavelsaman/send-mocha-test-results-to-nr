@@ -15,7 +15,7 @@ jobs:
         run: mocha --reporter json --reporter-option="output=results.json"
       - uses: pavelsaman/send-mocha-test-results-to-nr@v1
         with:
-          new-relic-license-key: ${{ secrets.NEWRELIC_LICENSE_KEY_TECH }}
+          new-relic-license-key: ${{ secrets.NEWRELIC_LICENSE_KEY }}
 ```
 
 ## Inputs
