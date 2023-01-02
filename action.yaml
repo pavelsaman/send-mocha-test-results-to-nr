@@ -1,5 +1,9 @@
 name: Send Mocha test results to New Relic
 description: Send Mocha test results to New Relic Log API
+author: Pavel Saman
+branding:
+  icon: share
+  color: green
 
 inputs:
   new-relic-license-key:
