@@ -1,0 +1,33 @@
+name: 'Build'
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  make-dist:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Check formatting
+        run: npm run format-check
+
+      - name: Lint
+        run: npm run lint-check
+
+      - name: Build
+        run: npm run build
+
+      - name: Package
+        run: npm run package

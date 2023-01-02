@@ -1,0 +1,47 @@
+{
+  "name": "send-mocha-test-results-to-nr",
+  "description": "Send Mocha test results to New Relic",
+  "private": true,
+  "version": "0.0.0",
+  "main": "lib/main.js",
+  "scripts": {
+    "format": "prettier --write '**/*.ts'",
+    "format-check": "prettier --check '**/*.ts'",
+    "lint": "eslint --fix src/**/*.ts",
+    "lint-check": "eslint src/**/*.ts",
+    "build": "tsc",
+    "package": "ncc build --source-map --license licenses.txt",
+    "all": "npm run format && npm run lint && npm run build && npm run package",
+    "clean": "rm lib/* && rm -rf dist/",
+    "clean-all": "rm -rf node_modules && rm lib/* && rm -rf dist/"
+  },
+  "keywords": [
+    "github",
+    "action",
+    "new-relic",
+    "test-results",
+    "mocha"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pavelsaman/send-mocha-test-results-to-nr.git"
+  },
+  "author": "Pavel Saman",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/artifact": "^1.1.0",
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^5.1.1",
+    "axios": "^1.2.2",
+    "moment": "^2.29.4"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.18",
+    "@typescript-eslint/parser": "^5.47.1",
+    "@vercel/ncc": "^0.36.0",
+    "eslint": "^8.31.0",
+    "eslint-plugin-github": "^4.6.0",
+    "prettier": "^2.8.1",
+    "typescript": "^4.9.4"
+  }
+}

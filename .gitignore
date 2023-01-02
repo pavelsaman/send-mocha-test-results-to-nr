@@ -1,0 +1,7 @@
+node_modules/
+lib/
+
+.envrc
+
+.DS_Store
+Thumbs.db

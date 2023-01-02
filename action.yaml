@@ -1,0 +1,33 @@
+name: Send Mocha test results to New Relic
+description: Send Mocha test results to New Relic Log API
+
+inputs:
+  new-relic-license-key:
+    description: New Relic API ingest key
+    required: true
+  test-result-filename:
+    description: Filename with test results
+    required: false
+    default: './results.json'
+  fail-pipeline:
+    description: Whether to fail the pipeline when something goes wrong in this action
+    required: false
+    default: '0'
+  verbose-log:
+    description: Print verbose messages to log, useful for debugging
+    required: false
+    default: '0'
+  upload-test-artifact:
+    description: Whether to upload test artifact
+    required: false
+    default: '1'
+  job-id:
+    description: Custom job id of the job this action was called from
+    required: false
+  nr-dashboard-link:
+    description: Link to New Relic dashboard that will be printed on Summary page in step summary
+    required: false
+
+runs:
+  using: 'node16'
+  main: 'dist/index.js'

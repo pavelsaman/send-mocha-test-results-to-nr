@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Go to the root of the repo
+cd "$(git rev-parse --show-toplevel)"
+
+# Check that the github action files are all committed
+make clean dist-check
+
+exit 0
