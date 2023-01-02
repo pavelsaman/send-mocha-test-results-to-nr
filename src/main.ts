@@ -11,6 +11,7 @@ const desiredExitCode = core.getInput('fail-pipeline') === '1' ? 1 : 0;
 const verboseLog = core.getInput('verbose-log') === '1' ? true : false;
 const jobId = core.getInput('job-id') || github.context.job;
 const newRelicDashboardLink = core.getInput('new-relic-dashboard-link') || config.newRelicDashboardUrl;
+const newRelicapiUrl = core.getInput('new-relic-api-url');
 
 const timestamp = (): number => Math.round(Date.now());
 const getFormattedTime = (): string => moment(new Date()).format('YYYY-MM-DD-HH-mm-ss');
@@ -222,7 +223,7 @@ async function sendResults(resultsForNR: TestResultsForNR[]): Promise<void> {
 
     try {
       const response = await axios({
-        url: config.apiUrl,
+        url: newRelicapiUrl,
         method: 'POST',
         headers: {
           'Api-Key': core.getInput('new-relic-license-key'),

@@ -10,7 +10,6 @@ var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.config = void 0;
 exports.config = {
-    apiUrl: 'https://log-api.newrelic.com/log/v1',
     axiosTimeoutSec: 10000,
     maxTestCasesPerRequest: 70,
     filePathToProject: (_a = `${process.env.GITHUB_WORKSPACE}/`) !== null && _a !== void 0 ? _a : '',
@@ -73,6 +72,7 @@ const desiredExitCode = core.getInput('fail-pipeline') === '1' ? 1 : 0;
 const verboseLog = core.getInput('verbose-log') === '1' ? true : false;
 const jobId = core.getInput('job-id') || github.context.job;
 const newRelicDashboardLink = core.getInput('new-relic-dashboard-link') || config_1.config.newRelicDashboardUrl;
+const newRelicapiUrl = core.getInput('new-relic-api-url');
 const timestamp = () => Math.round(Date.now());
 const getFormattedTime = () => (0, moment_1.default)(new Date()).format('YYYY-MM-DD-HH-mm-ss');
 const isPullRequest = (githubBranch) => githubBranch.startsWith('refs/pull/');
@@ -263,7 +263,7 @@ function sendResults(resultsForNR) {
             }
             try {
                 const response = yield (0, axios_1.default)({
-                    url: config_1.config.apiUrl,
+                    url: newRelicapiUrl,
                     method: 'POST',
                     headers: {
                         'Api-Key': core.getInput('new-relic-license-key'),

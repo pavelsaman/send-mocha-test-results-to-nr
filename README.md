@@ -69,3 +69,11 @@ Custom job id of the job this action was called from.
 Link to New Relic dashboard that will be printed in step summary on Summary page.
 
 **Required**: false
+
+### new-relic-api-url
+
+New Relic Log API url. Depends on where the data is stored, e.g. in EU (`https://log-api.eu.newrelic.com/log/v1`), or US (`https://log-api.newrelic.com/log/v1`).
+
+**Required**: false
+
+**Default**: `https://log-api.newrelic.com/log/v1`
