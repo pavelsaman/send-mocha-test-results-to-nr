@@ -1,4 +1,4 @@
-# Send test data to New Relic
+# Send Mocha test results to New Relic
 
 ## Description
 
