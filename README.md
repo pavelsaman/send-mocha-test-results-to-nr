@@ -64,8 +64,8 @@ Custom job id of the job this action was called from.
 
 **Required**: false
 
-### nr-dashboard-link
+### new-relic-dashboard-link
 
-Link to New Relic dashboard that will be printed on Summary page in step summary.
+Link to New Relic dashboard that will be printed in step summary on Summary page.
 
 **Required**: false

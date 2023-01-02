@@ -72,7 +72,7 @@ const config_1 = __nccwpck_require__(88);
 const desiredExitCode = core.getInput('fail-pipeline') === '1' ? 1 : 0;
 const verboseLog = core.getInput('verbose-log') === '1' ? true : false;
 const jobId = core.getInput('job-id') || github.context.job;
-const newRelicDashboardLink = core.getInput('nr-dashboard-link') || config_1.config.newRelicDashboardUrl;
+const newRelicDashboardLink = core.getInput('new-relic-dashboard-link') || config_1.config.newRelicDashboardUrl;
 const timestamp = () => Math.round(Date.now());
 const getFormattedTime = () => (0, moment_1.default)(new Date()).format('YYYY-MM-DD-HH-mm-ss');
 const isPullRequest = (githubBranch) => githubBranch.startsWith('refs/pull/');

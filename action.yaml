@@ -28,8 +28,8 @@ inputs:
   job-id:
     description: Custom job id of the job this action was called from
     required: false
-  nr-dashboard-link:
-    description: Link to New Relic dashboard that will be printed on Summary page in step summary
+  new-relic-dashboard-link:
+    description: Link to New Relic dashboard that will be printed in step summary on Summary page
     required: false
 
 runs:

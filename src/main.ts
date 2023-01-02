@@ -10,7 +10,7 @@ import {TestResult, TestResults, GitHubProperties, TestResultsForNR} from './typ
 const desiredExitCode = core.getInput('fail-pipeline') === '1' ? 1 : 0;
 const verboseLog = core.getInput('verbose-log') === '1' ? true : false;
 const jobId = core.getInput('job-id') || github.context.job;
-const newRelicDashboardLink = core.getInput('nr-dashboard-link') || config.newRelicDashboardUrl;
+const newRelicDashboardLink = core.getInput('new-relic-dashboard-link') || config.newRelicDashboardUrl;
 
 const timestamp = (): number => Math.round(Date.now());
 const getFormattedTime = (): string => moment(new Date()).format('YYYY-MM-DD-HH-mm-ss');
