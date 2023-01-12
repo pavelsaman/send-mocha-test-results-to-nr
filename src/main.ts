@@ -4,8 +4,8 @@ import moment from 'moment';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as artifact from '@actions/artifact';
-import {config} from './config';
-import {TestResult, TestResults, GitHubProperties, TestResultsForNR} from './types';
+import { config } from './config';
+import { TestResult, TestResults, GitHubProperties, TestResultsForNR } from './types';
 
 const desiredExitCode = core.getInput('fail-pipeline') === '1' ? 1 : 0;
 const verboseLog = core.getInput('verbose-log') === '1' ? true : false;
@@ -75,11 +75,11 @@ async function printFailures(failures: TestResult[]): Promise<void> {
     .addHeading(':test_tube: Failed test cases')
     .addTable([
       [
-        {data: 'File', header: true},
-        {data: 'Test title', header: true},
-        {data: 'Test full title', header: true},
-        {data: 'Test duration [ms]', header: true},
-        {data: 'Error message', header: true},
+        { data: 'File', header: true },
+        { data: 'Test title', header: true },
+        { data: 'Test full title', header: true },
+        { data: 'Test duration [ms]', header: true },
+        { data: 'Error message', header: true },
       ],
       ...stepSummaryFailures,
     ])
@@ -129,7 +129,11 @@ function readResults(fileName: string): TestResults | undefined {
 }
 
 function testResultsAreParsable(data: TestResults): boolean {
-  if (!data.tests || !data.failures) {
+  if (!data.tests) {
+    return false;
+  }
+
+  if (!data.failures) {
     return false;
   }
 
@@ -143,12 +147,12 @@ function assembleResults(data: TestResults): TestResultsForNR[] {
    * data.failures - contains both failed tests and hooks
    * data.pending - skipped tests
    */
-  const passedTests = data.tests.filter(test => !testCaseFailed(test) && !isPending(test));
-  const pendingTests = data.tests.filter(test => isPending(test));
+  const passedTests = data.tests.filter((test) => !(testCaseFailed(test) || isPending(test)));
+  const pendingTests = data.tests.filter((test) => isPending(test));
 
-  const passedTestsNRFormat = passedTests.map(test => {
+  const passedTestsNRFormat = passedTests.map((test) => {
     return {
-      message: `action-nr-test-results: test case PASSED`,
+      message: 'action-nr-test-results: test case PASSED',
       attributes: {
         testFile: removePathToProject(test.file),
         testSuite: test.fullTitle?.replace(test.title, '').trim(),
@@ -160,9 +164,9 @@ function assembleResults(data: TestResults): TestResultsForNR[] {
     };
   });
 
-  const pendingTestsNRFormat = pendingTests.map(test => {
+  const pendingTestsNRFormat = pendingTests.map((test) => {
     return {
-      message: `action-nr-test-results: test case SKIPPED`,
+      message: 'action-nr-test-results: test case SKIPPED',
       attributes: {
         testFile: removePathToProject(test.file),
         testSuite: test.fullTitle?.replace(test.title, '').trim(),
@@ -174,9 +178,9 @@ function assembleResults(data: TestResults): TestResultsForNR[] {
     };
   });
 
-  const failuresNRFormat = data.failures.map(test => {
+  const failuresNRFormat = data.failures.map((test) => {
     return {
-      message: `action-nr-test-results: test case FAILED`,
+      message: 'action-nr-test-results: test case FAILED',
       attributes: {
         testFile: removePathToProject(test.file),
         testSuite: test.fullTitle?.replace(test.title, '').trim(),
@@ -229,7 +233,7 @@ async function sendResults(resultsForNR: TestResultsForNR[]): Promise<void> {
           'Api-Key': core.getInput('new-relic-license-key'),
         },
         data: JSON.stringify(bucket),
-        timeout: config.axiosTimeoutSec,
+        timeout: config.axiosTimeoutMs,
       });
       core.info(`${response.status}\n${JSON.stringify(response.data)}`);
     } catch (err) {
@@ -264,7 +268,7 @@ async function run(): Promise<void> {
   }
 
   if (!testResultsAreParsable(testResults)) {
-    printExitMessage(`Test data are not in the correct format.`);
+    printExitMessage('Test data are not in the correct format.');
     process.exit(desiredExitCode);
   }
 
