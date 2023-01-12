@@ -1,6 +1,5 @@
 import fs from 'fs';
 import axios from 'axios';
-import moment from 'moment';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as artifact from '@actions/artifact';
@@ -13,8 +12,26 @@ const jobId = core.getInput('job-id') || github.context.job;
 const newRelicDashboardLink = core.getInput('new-relic-dashboard-link') || config.newRelicDashboardUrl;
 const newRelicapiUrl = core.getInput('new-relic-api-url');
 
+const addLeadingZero = (datePart: string): string => {
+  if (datePart.length === 1) {
+    return `0${datePart}`;
+  }
+
+  return datePart;
+};
 const timestamp = (): number => Math.round(Date.now());
-const getFormattedTime = (): string => moment(new Date()).format('YYYY-MM-DD-HH-mm-ss');
+const getFormattedTime = (): string => {
+  const now = new Date();
+
+  const year = String(now.getUTCFullYear());
+  const month = addLeadingZero(String(now.getUTCMonth() + 1));
+  const day = addLeadingZero(String(now.getUTCDate()));
+  const hour = addLeadingZero(String(now.getUTCHours()));
+  const minute = addLeadingZero(String(now.getUTCMinutes()));
+  const second = addLeadingZero(String(now.getUTCSeconds()));
+
+  return `${year}-${month}-${day}-${hour}-${minute}-${second}`;
+};
 const isPullRequest = (githubBranch: string): boolean => githubBranch.startsWith('refs/pull/');
 const isRelease = (githubBranch: string): boolean => githubBranch.startsWith('refs/tags/');
 const testCaseFailed = (testCase: TestResult): boolean => (Object.keys(testCase.err).length === 0 ? false : true);
