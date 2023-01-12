@@ -3,14 +3,14 @@
   "description": "Send Mocha test results to New Relic",
   "private": true,
   "version": "0.0.0",
-  "main": "lib/main.js",
+  "main": "dist/index.js",
   "scripts": {
-    "format": "prettier --write '**/*.ts'",
-    "format-check": "prettier --check '**/*.ts'",
-    "lint": "eslint --fix src/**/*.ts",
-    "lint-check": "eslint src/**/*.ts",
+    "format": "rome format --write src/",
+    "format-check": "rome format src/",
+    "lint": "rome check --apply src/",
+    "lint-check": "rome check src/",
     "build": "tsc",
-    "package": "ncc build --source-map --license licenses.txt",
+    "package": "esbuild --bundle src/main.ts --outfile=dist/index.js --minify --sourcemap --platform=node --target=node16",
     "all": "npm run format && npm run lint && npm run build && npm run package",
     "clean": "rm lib/* && rm -rf dist/",
     "clean-all": "rm -rf node_modules && rm lib/* && rm -rf dist/"
@@ -37,11 +37,8 @@
   },
   "devDependencies": {
     "@types/node": "^18.11.18",
-    "@typescript-eslint/parser": "^5.47.1",
-    "@vercel/ncc": "^0.36.0",
-    "eslint": "^8.31.0",
-    "eslint-plugin-github": "^4.6.0",
-    "prettier": "^2.8.1",
+    "esbuild": "^0.16.17",
+    "rome": "11.0.0",
     "typescript": "^4.9.4"
   }
 }
