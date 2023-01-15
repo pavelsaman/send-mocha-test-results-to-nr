@@ -13,6 +13,7 @@ const jobId = core.getInput('job-id') || github.context.job;
 const newRelicDashboardLink = core.getInput('new-relic-dashboard-link') || config.newRelicDashboardUrl;
 const newRelicapiUrl = core.getInput('new-relic-api-url');
 
+const sleepForMs = (ms: number): Promise<NodeJS.Timeout> => new Promise((resolve) => setTimeout(resolve, ms));
 const addLeadingZero = (datePart: string): string => {
   if (datePart.length === 1) {
     return `0${datePart}`;
@@ -277,6 +278,10 @@ async function sendResultsToNR(resultsForNR: TestResultsForNR[]): Promise<void> 
       printWarningMessage(
         `All ${currentRequestAttempt} request to NR failed. This batch of data will not be in NewRelic! You can find this batch of data in "${artifactName}" artifact.`,
       );
+
+      if (currentRequestAttempt < config.maxRequestRetries) {
+        await sleepForMs(currentRequestAttempt * 100);
+      }
     }
   }
 }
