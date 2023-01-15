@@ -240,10 +240,10 @@ async function sendResultsToNR(resultsForNR: TestResultsForNR[]): Promise<void> 
       console.log(JSON.stringify(bucket));
     }
 
-    let continueRequesting = true;
+    let continueRetrying = true;
     let currentRequestAttempt = 0;
 
-    while (continueRequesting && currentRequestAttempt < config.maxRequestRetries) {
+    while (continueRetrying && currentRequestAttempt < config.maxRequestRetries) {
       currentRequestAttempt++;
 
       try {
@@ -257,19 +257,19 @@ async function sendResultsToNR(resultsForNR: TestResultsForNR[]): Promise<void> 
           timeout: 1, //config.axiosTimeoutMs,
         });
 
-        continueRequesting = false;
+        continueRetrying = false;
         core.info(
           `${github.context.action}: Attempt ${currentRequestAttempt} succeeded: ${response.status}\n${JSON.stringify(
             response.data,
           )}`,
         );
       } catch (err) {
-        continueRequesting = true;
+        continueRetrying = true;
         printWarningMessage(`Attempt ${currentRequestAttempt} failed with:\n${err.stack}`);
       }
     }
 
-    if (continueRequesting) {
+    if (continueRetrying) {
       const artifactName = `batch_${randomUUID()}_${jobId}_${getFormattedTime()}`;
       fs.writeFileSync(artifactName, JSON.stringify(bucket));
       await uploadArtifact(artifactName, artifactName);
