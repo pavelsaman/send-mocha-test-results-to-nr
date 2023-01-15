@@ -5,6 +5,7 @@ import * as github from '@actions/github';
 import * as artifact from '@actions/artifact';
 import { config } from './config';
 import { TestResult, TestResults, GitHubProperties, TestResultsForNR } from './types';
+import { randomUUID } from 'crypto';
 
 const desiredExitCode = core.getInput('fail-pipeline') === '1' ? 1 : 0;
 const verboseLog = core.getInput('verbose-log') === '1' ? true : false;
@@ -44,11 +45,8 @@ const removePathToProject = (filePath: string | undefined): string | undefined =
   return undefined;
 };
 
-function printExitMessage(message: string): void {
-  core.warning(
-    `${github.context.action}: ${message}
-    Exiting with exit code of ${desiredExitCode} as per "fail-pipeline" input variable.`,
-  );
+function printWarningMessage(message: string): void {
+  core.warning(`${github.context.action}: ${message}`);
 }
 
 function getFileLink(filePath: string | undefined): string | undefined {
@@ -231,7 +229,7 @@ function assembleResults(data: TestResults): TestResultsForNR[] {
   return buckets;
 }
 
-async function sendResults(resultsForNR: TestResultsForNR[]): Promise<void> {
+async function sendResultsToNR(resultsForNR: TestResultsForNR[]): Promise<void> {
   if (verboseLog) {
     console.log(`Sending ${resultsForNR.length} requests to New Relic.`);
     console.log(JSON.stringify(resultsForNR));
@@ -242,33 +240,55 @@ async function sendResults(resultsForNR: TestResultsForNR[]): Promise<void> {
       console.log(JSON.stringify(bucket));
     }
 
-    try {
-      const response = await axios({
-        url: newRelicapiUrl,
-        method: 'POST',
-        headers: {
-          'Api-Key': core.getInput('new-relic-license-key'),
-        },
-        data: JSON.stringify(bucket),
-        timeout: config.axiosTimeoutMs,
-      });
-      core.info(`${response.status}\n${JSON.stringify(response.data)}`);
-    } catch (err) {
-      printExitMessage(`request to NR failed:\n${err.stack}`);
+    let continueRequesting = true;
+    let currentRequestAttempt = 0;
+
+    while (continueRequesting && currentRequestAttempt < config.maxRequestRetries) {
+      currentRequestAttempt++;
+
+      try {
+        const response = await axios({
+          url: newRelicapiUrl,
+          method: 'POST',
+          headers: {
+            'Api-Key': core.getInput('new-relic-license-key'),
+          },
+          data: JSON.stringify(bucket),
+          timeout: 1, //config.axiosTimeoutMs,
+        });
+
+        continueRequesting = false;
+        core.info(
+          `${github.context.action}: Attempt ${currentRequestAttempt} succeeded: ${response.status}\n${JSON.stringify(
+            response.data,
+          )}`,
+        );
+      } catch (err) {
+        continueRequesting = true;
+        printWarningMessage(`Attempt ${currentRequestAttempt} failed with:\n${err.stack}`);
+      }
+    }
+
+    if (continueRequesting) {
+      const artifactName = `batch_${randomUUID()}_${jobId}_${getFormattedTime()}`;
+      fs.writeFileSync(artifactName, JSON.stringify(bucket));
+      await uploadArtifact(artifactName, artifactName);
+
+      printWarningMessage(
+        `All ${currentRequestAttempt} request to NR failed. This batch of data will not be in NewRelic! You can find this batch of data in "${artifactName}" artifact.`,
+      );
     }
   }
 }
 
-async function uploadTestResultsArtifact(fileName: string): Promise<void> {
+async function uploadArtifact(artifactName: string, fileNamesToUpload: string): Promise<void> {
   const artifactClient = artifact.create();
-  const artifactName = `test_results_${jobId}_${getFormattedTime()}`;
-  const files = [fileName];
   const rootDirectory = '.';
   const options = {
     continueOnError: false,
   };
 
-  await artifactClient.uploadArtifact(artifactName, files, rootDirectory, options);
+  await artifactClient.uploadArtifact(artifactName, [fileNamesToUpload], rootDirectory, options);
 }
 
 async function run(): Promise<void> {
@@ -276,23 +296,23 @@ async function run(): Promise<void> {
   const testResults = readResults(fileName);
 
   if (!testResults) {
-    printExitMessage(`${fileName} not found.`);
+    printWarningMessage(`${fileName} not found.`);
     process.exit(desiredExitCode);
   }
 
   if (core.getInput('upload-test-artifact') === '1') {
-    await uploadTestResultsArtifact(fileName);
+    await uploadArtifact(`test_results_${jobId}_${getFormattedTime()}`, fileName);
   }
 
   if (!testResultsAreParsable(testResults)) {
-    printExitMessage('Test data are not in the correct format.');
+    printWarningMessage('Test data are not in the correct format.');
     process.exit(desiredExitCode);
   }
 
   await printFailures(testResults.failures);
 
   const logsForNR = assembleResults(testResults);
-  await sendResults(logsForNR);
+  await sendResultsToNR(logsForNR);
 }
 
 run();

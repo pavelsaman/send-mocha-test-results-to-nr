@@ -4,4 +4,5 @@ export const config = {
   filePathToProject: `${process.env.GITHUB_WORKSPACE}/` ?? '',
   urlToFileAtCommit: `${process.env?.GITHUB_SERVER_URL}/${process.env?.GITHUB_REPOSITORY}/blob/{commit}/{filePath}`,
   newRelicDashboardUrl: '',
+  maxRequestRetries: 3,
 };
