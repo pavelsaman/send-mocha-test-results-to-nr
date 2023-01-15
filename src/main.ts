@@ -254,7 +254,7 @@ async function sendResultsToNR(resultsForNR: TestResultsForNR[]): Promise<void> 
             'Api-Key': core.getInput('new-relic-license-key'),
           },
           data: JSON.stringify(bucket),
-          timeout: 1, //config.axiosTimeoutMs,
+          timeout: config.axiosTimeoutMs,
         });
 
         continueRetrying = false;
