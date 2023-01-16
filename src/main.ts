@@ -14,15 +14,17 @@ const newRelicDashboardLink = core.getInput('new-relic-dashboard-link') || confi
 const newRelicapiUrl = core.getInput('new-relic-api-url');
 
 const sleepForMs = (ms: number): Promise<NodeJS.Timeout> => new Promise((resolve) => setTimeout(resolve, ms));
-const addLeadingZero = (datePart: string): string => {
-  if (datePart.length === 1) {
-    return `0${datePart}`;
-  }
-
-  return datePart;
-};
+const addLeadingZero = (datePart: string): string => (datePart.length === 1 ? `0${datePart}` : datePart);
 const timestamp = (): number => Math.round(Date.now());
-const getFormattedTime = (): string => {
+const isPullRequest = (githubBranch: string): boolean => githubBranch.startsWith('refs/pull/');
+const isRelease = (githubBranch: string): boolean => githubBranch.startsWith('refs/tags/');
+const testCaseFailed = (testCase: TestResult): boolean => (Object.keys(testCase.err).length === 0 ? false : true);
+const isPending = (testCase: TestResult): boolean => testCase.duration === undefined;
+const removePathToProject = (filePath: string | undefined): string | undefined =>
+  filePath !== undefined ? filePath.replace(config.filePathToProject, '') : undefined;
+const prefixActionContext = (message: string): string => `${github.context.action}: ${message}`;
+
+function getFormattedTime(): string {
   const now = new Date();
 
   const year = String(now.getUTCFullYear());
@@ -33,21 +35,6 @@ const getFormattedTime = (): string => {
   const second = addLeadingZero(String(now.getUTCSeconds()));
 
   return `${year}-${month}-${day}-${hour}-${minute}-${second}`;
-};
-const isPullRequest = (githubBranch: string): boolean => githubBranch.startsWith('refs/pull/');
-const isRelease = (githubBranch: string): boolean => githubBranch.startsWith('refs/tags/');
-const testCaseFailed = (testCase: TestResult): boolean => (Object.keys(testCase.err).length === 0 ? false : true);
-const isPending = (testCase: TestResult): boolean => testCase.duration === undefined;
-const removePathToProject = (filePath: string | undefined): string | undefined => {
-  if (filePath !== undefined) {
-    return filePath.replace(config.filePathToProject, '');
-  }
-
-  return undefined;
-};
-
-function printWarningMessage(message: string): void {
-  core.warning(`${github.context.action}: ${message}`);
 }
 
 function getFileLink(filePath: string | undefined): string | undefined {
@@ -85,7 +72,7 @@ async function printFailures(failures: TestResult[]): Promise<void> {
       failure.err?.message ? failure.err?.message : '-',
     ]);
   }
-  core.error(failuresAsString);
+  core.error(prefixActionContext(failuresAsString));
 
   await core.summary
     .addHeading(':test_tube: Failed test cases')
@@ -232,8 +219,9 @@ function assembleResults(data: TestResults): TestResultsForNR[] {
 
 async function sendResultsToNR(resultsForNR: TestResultsForNR[]): Promise<void> {
   if (verboseLog) {
-    console.log(`Sending ${resultsForNR.length} requests to New Relic.`);
-    console.log(JSON.stringify(resultsForNR));
+    console.log(
+      prefixActionContext(`Sending ${resultsForNR.length} requests to New Relic:\n${JSON.stringify(resultsForNR)}`),
+    );
   }
 
   for (const bucket of resultsForNR) {
@@ -260,13 +248,13 @@ async function sendResultsToNR(resultsForNR: TestResultsForNR[]): Promise<void> 
 
         continueRetrying = false;
         core.info(
-          `${github.context.action}: Attempt ${currentRequestAttempt} succeeded: ${response.status}\n${JSON.stringify(
-            response.data,
-          )}`,
+          prefixActionContext(
+            `Attempt ${currentRequestAttempt} succeeded: ${response.status}\n${JSON.stringify(response.data)}`,
+          ),
         );
       } catch (err) {
         continueRetrying = true;
-        printWarningMessage(`Attempt ${currentRequestAttempt} failed with:\n${err.stack}`);
+        core.warning(prefixActionContext(`Attempt ${currentRequestAttempt} failed with:\n${err.stack}`));
       }
     }
 
@@ -275,8 +263,10 @@ async function sendResultsToNR(resultsForNR: TestResultsForNR[]): Promise<void> 
       fs.writeFileSync(artifactName, JSON.stringify(bucket));
       await uploadArtifact(artifactName, artifactName);
 
-      printWarningMessage(
-        `All ${currentRequestAttempt} request to NR failed. This batch of data will not be in NewRelic! You can find this batch of data in "${artifactName}" artifact.`,
+      core.warning(
+        prefixActionContext(
+          `All ${currentRequestAttempt} request to NR failed. This batch of data will not be in NewRelic! You can find this batch of data in "${artifactName}" artifact.`,
+        ),
       );
 
       if (currentRequestAttempt < config.maxRequestRetries) {
@@ -301,7 +291,7 @@ async function run(): Promise<void> {
   const testResults = readResults(fileName);
 
   if (!testResults) {
-    printWarningMessage(`${fileName} not found.`);
+    core.warning(prefixActionContext(`${fileName} not found.`));
     process.exit(desiredExitCode);
   }
 
@@ -310,7 +300,7 @@ async function run(): Promise<void> {
   }
 
   if (!testResultsAreParsable(testResults)) {
-    printWarningMessage('Test data are not in the correct format.');
+    core.warning(prefixActionContext('Test data are not in the correct format.'));
     process.exit(desiredExitCode);
   }
 
